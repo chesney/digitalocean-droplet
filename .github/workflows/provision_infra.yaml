@@ -1,0 +1,32 @@
+name: Provision Digital Ocean Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deployment:
+    name: Provision Docker Droplet
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Tofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.6.2
+
+      - name: Tofu Init
+        run: tofu init
+
+      - name: Tofu Plan
+        run: tofu plan -var "digitalocean_api_token=${{ secrets.DO_API_TOKEN }}" -out=tf.plan
+      
+      - name: OpenTofu Apply
+        env:
+          TF_VAR_digitalocean_api_token: ${{ secrets.DO_API_TOKEN }}
+        run: tofu apply -auto-approve tf.plan
